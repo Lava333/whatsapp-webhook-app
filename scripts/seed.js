@@ -9,16 +9,16 @@ const { initDB } = require('../src/db/database');
 const { saveMessage } = require('../src/db/messages');
 
 const CLIENTS = [
-  { phone: '919876543210', name: 'Rahul Sharma' },
-  { phone: '918765432109', name: 'Priya Patel' },
-  { phone: '917654321098', name: 'Amit Kumar' },
-  { phone: '916543210987', name: 'Sneha Reddy' },
-  { phone: '915432109876', name: 'Vikram Singh' },
-  { phone: '914321098765', name: 'Meera Nair' },
-  { phone: '913210987654', name: 'Arjun Mehta' },
-  { phone: '912109876543', name: 'Kavitha Iyer' },
-  { phone: '911098765432', name: 'Ravi Verma' },
-  { phone: '910987654321', name: 'Ananya Gupta' },
+  { phone: '919876543210', name: 'Test Rahul Sharma' },
+  { phone: '918765432109', name: 'Test Priya Patel' },
+  { phone: '917654321098', name: 'Test Amit Kumar' },
+  { phone: '916543210987', name: 'Test Sneha Reddy' },
+  { phone: '915432109876', name: 'Test Vikram Singh' },
+  { phone: '914321098765', name: 'Test Meera Nair' },
+  { phone: '913210987654', name: 'Test Arjun Mehta' },
+  { phone: '912109876543', name: 'Test Kavitha Iyer' },
+  { phone: '911098765432', name: 'Test Ravi Verma' },
+  { phone: '910987654321', name: 'Test Ananya Gupta' },
 ];
 
 const MESSAGES = [

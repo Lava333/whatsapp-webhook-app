@@ -23,10 +23,11 @@ let totalClients = 0;
 
 // ─── Tab routing ──────────────────────────────────────────────
 const TAB_TITLES = {
-  overview:  ['Overview',   'Real-time WhatsApp message metrics'],
-  clients:   ['Clients',    'Messages received, segregated by client'],
-  messages:  ['Messages',   'Full message log'],
-  analytics: ['Analytics',  'Time-series trends and breakdowns'],
+  overview:  ['Overview',      'Real-time WhatsApp message metrics'],
+  clients:   ['Clients',       'Messages received, segregated by client'],
+  messages:  ['Messages',      'Full message log'],
+  analytics: ['Analytics',     'Time-series trends and breakdowns'],
+  send:      ['Send Message',  'Compose and send WhatsApp messages'],
 };
 
 function switchTab(tab) {
@@ -38,6 +39,7 @@ function switchTab(tab) {
   if (tab === 'clients')   loadClients();
   if (tab === 'messages')  loadMessages();
   if (tab === 'analytics') loadAnalyticsCharts();
+  if (tab === 'send')      loadSentHistory();
 }
 
 document.querySelectorAll('.nav-item').forEach(el => {
@@ -365,3 +367,131 @@ async function refreshAll() {
 // ─── Boot ─────────────────────────────────────────────────────
 refreshAll();
 setInterval(refreshAll, 30000);
+
+// ══════════════════════════════════════════════════════════════
+// SEND MESSAGE TAB
+// ══════════════════════════════════════════════════════════════
+
+// Track last client phone for quick-fill
+let _lastClientPhone = null;
+
+// ── Char counter ──────────────────────────────────────────────
+function updateCharCount() {
+  const len = (document.getElementById('send-message').value || '').length;
+  const el  = document.getElementById('send-char-count');
+  el.textContent = `${len} / 4096`;
+  el.style.color = len > 3800 ? '#e95b5b' : 'var(--muted)';
+}
+
+// ── Quick reply templates ─────────────────────────────────────
+function insertQuick(text) {
+  document.getElementById('send-message').value = text;
+  updateCharCount();
+  document.getElementById('send-message').focus();
+}
+
+// ── Fill phone from last interacted client ────────────────────
+function fillLastClient() {
+  if (_lastClientPhone) {
+    document.getElementById('send-phone').value = _lastClientPhone;
+    showSendResult('info', `📋 Filled phone: ${_lastClientPhone}`);
+  } else {
+    showSendResult('error', 'No client selected yet. Click a client first.');
+  }
+}
+
+// Override openClientDrawer to track last phone
+const _origOpenClientDrawer = openClientDrawer;
+async function openClientDrawer(phone, name) {
+  _lastClientPhone = phone;
+  return _origOpenClientDrawer(phone, name);
+}
+
+// ── Show result banner ────────────────────────────────────────
+function showSendResult(type, msg) {
+  const el = document.getElementById('send-result');
+  el.style.display = 'block';
+  el.className = `send-result send-result-${type}`;
+  el.innerHTML = msg;
+  if (type === 'success') setTimeout(() => { el.style.display = 'none'; }, 6000);
+}
+
+// ── Send Message ──────────────────────────────────────────────
+async function sendMessage() {
+  const phone   = (document.getElementById('send-phone').value || '').trim();
+  const message = (document.getElementById('send-message').value || '').trim();
+  const btn     = document.getElementById('btn-send');
+  const btnText = document.getElementById('btn-send-text');
+
+  // Client-side validation
+  if (!phone) { showSendResult('error', '❌ Please enter a phone number.'); return; }
+  if (!message) { showSendResult('error', '❌ Please enter a message.'); return; }
+
+  // Loading state
+  btn.disabled = true;
+  btnText.textContent = '⏳ Sending…';
+  document.getElementById('send-result').style.display = 'none';
+
+  try {
+    const res  = await fetch('/api/send', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ to: phone, message }),
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      showSendResult('success',
+        `✅ Message sent to <strong>${esc(data.to)}</strong>!<br/>
+         <small style="color:var(--muted)">ID: ${esc(data.messageId || '—')}</small>`
+      );
+      // Clear message field, keep phone for follow-ups
+      document.getElementById('send-message').value = '';
+      updateCharCount();
+      // Refresh sent history
+      loadSentHistory();
+    } else {
+      showSendResult('error', `❌ Failed: ${esc(data.error)}`);
+    }
+  } catch (err) {
+    showSendResult('error', `❌ Network error: ${esc(err.message)}`);
+  } finally {
+    btn.disabled = false;
+    btnText.textContent = '📤 Send Message';
+  }
+}
+
+// ── Sent History ──────────────────────────────────────────────
+async function loadSentHistory() {
+  try {
+    const { data, total } = await api('/api/messages?limit=50&offset=0');
+    const sent = data.filter(m => m.direction === 'outbound');
+
+    document.getElementById('sent-count-chip').textContent = sent.length;
+
+    const tbody = document.getElementById('sent-tbody');
+    if (!sent.length) {
+      tbody.innerHTML = '<tr><td colspan="4" class="empty">No sent messages yet — send your first message above!</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = sent.map((m, i) => `
+      <tr onclick="document.getElementById('send-phone').value='${esc(m.sender_phone)}';switchTab('send')">
+        <td style="color:var(--muted)">${i + 1}</td>
+        <td>
+          ${m.sender_name ? `<strong>${esc(m.sender_name)}</strong><br/>` : ''}
+          <small style="color:var(--muted);font-family:monospace">${esc(m.sender_phone)}</small>
+        </td>
+        <td><div class="msg-body" title="${esc(m.body)}">${esc(m.body || '—')}</div></td>
+        <td style="color:var(--muted);font-size:.75rem;white-space:nowrap">${fmtTime(m.created_at)}</td>
+      </tr>`).join('');
+  } catch (err) {
+    console.error('loadSentHistory error:', err);
+  }
+}
+
+// ── Allow Ctrl+Enter to send ──────────────────────────────────
+document.getElementById('send-message')?.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.key === 'Enter') sendMessage();
+});
+

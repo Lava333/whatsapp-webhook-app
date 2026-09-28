@@ -45,6 +45,7 @@ function mountRoutes() {
   const webhookRouter  = require('./routes/webhook');
   const dashboardRouter = require('./routes/dashboard');
   const authRouter     = require('./routes/auth');
+  const sendRouter     = require('./routes/send');
 
   // ── Public: WhatsApp webhook (Meta must reach this without auth)
   app.use('/whatsapp/webhook', webhookRouter);
@@ -70,6 +71,9 @@ function mountRoutes() {
 
   // ── Protected: Analytics REST API
   app.use('/api', requireLogin, dashboardRouter);
+
+  // ── Protected: Send WhatsApp message
+  app.use('/api/send', requireLogin, sendRouter);
 
   // ── Protected: Dashboard UI
   app.use('/dashboard', requireLogin, express.static(path.join(__dirname, '../public/dashboard')));

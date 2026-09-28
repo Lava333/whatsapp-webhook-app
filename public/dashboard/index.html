@@ -32,6 +32,9 @@
     <a href="#" class="nav-item" data-tab="analytics">
       <span class="nav-icon">📈</span> Analytics
     </a>
+    <a href="#" class="nav-item" data-tab="send">
+      <span class="nav-icon">✉️</span> Send Message
+    </a>
   </nav>
   <div class="sidebar-footer">
     <div class="live-dot"></div>
@@ -239,6 +242,75 @@
           <h3>Weekly Trend <span class="chip">12 weeks</span></h3>
         </div>
         <canvas id="chart-weekly" height="160"></canvas>
+      </div>
+    </div>
+  </section>
+  <!-- ════════ TAB: SEND MESSAGE ════════ -->
+  <section class="tab-content" id="tab-send">
+
+    <!-- Compose panel -->
+    <div class="panel" style="max-width:640px;margin-bottom:1.5rem">
+      <div class="panel-header">
+        <h3>✉️ Send WhatsApp Message</h3>
+      </div>
+
+      <div class="send-form">
+        <!-- Recipient -->
+        <div class="send-field">
+          <label class="send-label">To (Phone Number)</label>
+          <div class="send-input-row">
+            <input id="send-phone" type="tel"
+              placeholder="919876543210  (with country code, no +)"
+              maxlength="15" autocomplete="off"/>
+            <button class="btn-fill-phone" onclick="fillLastClient()" title="Fill from last client">📋 Last</button>
+          </div>
+          <small class="send-hint">Include country code — e.g. 91 for India, 1 for USA</small>
+        </div>
+
+        <!-- Message -->
+        <div class="send-field">
+          <label class="send-label">Message</label>
+          <textarea id="send-message" rows="5"
+            placeholder="Type your WhatsApp message here…"
+            maxlength="4096"
+            oninput="updateCharCount()"></textarea>
+          <div class="send-footer-row">
+            <small class="send-char-count" id="send-char-count">0 / 4096</small>
+            <div class="send-quick-btns">
+              <button class="btn-quick" onclick="insertQuick('Hello! How can I help you today? 😊')">👋 Greeting</button>
+              <button class="btn-quick" onclick="insertQuick('Thank you for reaching out. We will get back to you shortly.')">🙏 Thanks</button>
+              <button class="btn-quick" onclick="insertQuick('Your request has been received and is being processed.')">✅ Confirm</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Send button -->
+        <button class="btn-send" id="btn-send" onclick="sendMessage()">
+          <span id="btn-send-text">📤 Send Message</span>
+        </button>
+
+        <!-- Result banner -->
+        <div id="send-result" class="send-result" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- Sent history panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <h3>📬 Sent History <span class="chip" id="sent-count-chip">0</span></h3>
+        <button class="btn-refresh" onclick="loadSentHistory()">↻ Refresh</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th><th>To</th><th>Message</th><th>Time</th>
+            </tr>
+          </thead>
+          <tbody id="sent-tbody">
+            <tr><td colspan="4" class="empty">No sent messages yet</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </section>
