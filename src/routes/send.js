@@ -41,9 +41,25 @@ router.post('/', async (req, res) => {
       message: text,
     });
   } catch (err) {
-    const apiError = err?.response?.data?.error?.message || err.message;
-    console.error(`[Send] ❌ Failed to send to ${phone}:`, apiError);
-    return res.status(502).json({ success: false, error: apiError });
+    const status   = err?.response?.status;
+    const apiMsg   = err?.response?.data?.error?.message;
+    const apiCode  = err?.response?.data?.error?.code;
+
+    let readable = apiMsg || err.message || 'Unknown error';
+
+    // Give actionable hints for common errors
+    if (!apiMsg && err.message === 'Got unexpected null') {
+      readable = 'Access token is invalid or expired. Update WHATSAPP_ACCESS_TOKEN in your .env file.';
+    } else if (status === 401 || apiCode === 190) {
+      readable = 'Access token expired or invalid. Get a new one from Meta → WhatsApp → API Setup.';
+    } else if (status === 400 && readable.includes('phone')) {
+      readable = 'Invalid phone number format. Use country code + number, e.g. 919876543210';
+    } else if (apiCode === 131030) {
+      readable = 'This phone number is not in your recipient list. Add it in Meta → Step 1 → Recipient.';
+    }
+
+    console.error(`[Send] ❌ Failed to send to ${phone}:`, readable);
+    return res.status(502).json({ success: false, error: readable });
   }
 });
 

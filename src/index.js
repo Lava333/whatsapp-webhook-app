@@ -5,6 +5,7 @@
 require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
+const FileStore = require('session-file-store')(session);
 const cors = require('cors');
 const path = require('path');
 const { initDB } = require('./db/database');
@@ -24,12 +25,18 @@ app.use(express.urlencoded({ extended: true }));
 
 // ─── Session ──────────────────────────────────────────────────
 app.use(session({
+  store: new FileStore({
+    path: './data/sessions',   // saved next to the DB
+    ttl:  8 * 60 * 60,         // 8 hours in seconds
+    retries: 1,
+    logFn: () => {},           // silence noisy logs
+  }),
   secret: process.env.SESSION_SECRET || 'whatsapp_fallback_secret',
   resave: false,
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: IS_PROD,   // HTTPS-only cookies on Railway
+    secure: IS_PROD,
     maxAge: 8 * 60 * 60 * 1000, // 8 hours
   },
 }));
