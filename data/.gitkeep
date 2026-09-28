@@ -1,0 +1,2 @@
+# Keep the data directory in git but ignore DB files
+# Railway will create whatsapp.db here at runtime

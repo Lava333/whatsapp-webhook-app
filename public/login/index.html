@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login — WhatsApp Business Dashboard</title>
+  <style>
+    /* ─── Reset ───────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0b0e18;
+      --surface:  #13172a;
+      --surface2: #1c2140;
+      --border:   #252c4a;
+      --accent:   #25D366;
+      --accent2:  #128C7E;
+      --text:     #e2e8f8;
+      --muted:    #6b7394;
+      --red:      #f05252;
+      --radius:   16px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ─── Animated background blobs ──────────────────── */
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.12;
+      animation: float 8s ease-in-out infinite;
+      pointer-events: none;
+    }
+    body::before {
+      width: 500px; height: 500px;
+      background: var(--accent);
+      top: -100px; left: -100px;
+    }
+    body::after {
+      width: 400px; height: 400px;
+      background: #4a9eff;
+      bottom: -80px; right: -80px;
+      animation-delay: -4s;
+    }
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50%       { transform: translate(30px, 20px) scale(1.05); }
+    }
+
+    /* ─── Card ────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.6);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ─── Logo / Brand ────────────────────────────────── */
+    .brand {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .brand-icon {
+      width: 64px; height: 64px;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      border-radius: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 8px 24px rgba(37,211,102,.3);
+    }
+    .brand h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .brand p {
+      font-size: .82rem;
+      color: var(--muted);
+      margin-top: .3rem;
+    }
+
+    /* ─── Form ────────────────────────────────────────── */
+    .form-group {
+      margin-bottom: 1.1rem;
+    }
+    label {
+      display: block;
+      font-size: .78rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: .4rem;
+      font-weight: 600;
+    }
+    .input-wrap {
+      position: relative;
+    }
+    .input-icon {
+      position: absolute;
+      left: .85rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1rem;
+      pointer-events: none;
+      opacity: .5;
+    }
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: .75rem .85rem .75rem 2.5rem;
+      color: var(--text);
+      font-size: .95rem;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37,211,102,.15);
+    }
+    .toggle-pass {
+      position: absolute;
+      right: .85rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: .85rem;
+      padding: .2rem;
+    }
+    .toggle-pass:hover { color: var(--text); }
+
+    /* ─── Remember me ─────────────────────────────────── */
+    .remember {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      font-size: .82rem;
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+      cursor: pointer;
+    }
+    .remember input[type="checkbox"] {
+      width: 16px; height: 16px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    /* ─── Submit button ───────────────────────────────── */
+    .btn-login {
+      width: 100%;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      border: none;
+      border-radius: 10px;
+      padding: .85rem;
+      color: #000;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .2s, transform .15s;
+      letter-spacing: .02em;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-login:hover:not(:disabled) { opacity: .9; transform: translateY(-1px); }
+    .btn-login:active               { transform: translateY(0); }
+    .btn-login:disabled             { opacity: .6; cursor: not-allowed; }
+    .btn-login .spinner {
+      display: none;
+      width: 18px; height: 18px;
+      border: 2px solid rgba(0,0,0,.3);
+      border-top-color: #000;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── Error / Success alerts ──────────────────────── */
+    .alert {
+      border-radius: 10px;
+      padding: .75rem 1rem;
+      font-size: .85rem;
+      margin-bottom: 1.1rem;
+      display: none;
+      align-items: center;
+      gap: .5rem;
+    }
+    .alert.show { display: flex; }
+    .alert-error   { background: rgba(240,82,82,.12);  border: 1px solid rgba(240,82,82,.3);  color: #f87171; }
+    .alert-success { background: rgba(37,211,102,.12); border: 1px solid rgba(37,211,102,.3); color: var(--accent); }
+
+    /* ─── Divider ─────────────────────────────────────── */
+    .divider {
+      text-align: center;
+      font-size: .75rem;
+      color: var(--muted);
+      margin: 1.5rem 0 1rem;
+      position: relative;
+    }
+    .divider::before, .divider::after {
+      content: ''; position: absolute; top: 50%;
+      width: 38%; height: 1px; background: var(--border);
+    }
+    .divider::before { left: 0; }
+    .divider::after  { right: 0; }
+
+    /* ─── Credentials hint ────────────────────────────── */
+    .hint {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .75rem 1rem;
+      font-size: .78rem;
+      color: var(--muted);
+    }
+    .hint strong { color: var(--accent); }
+    .hint-row { display: flex; justify-content: space-between; margin-top: .25rem; }
+
+    /* ─── Footer ──────────────────────────────────────── */
+    .card-footer {
+      margin-top: 1.5rem;
+      text-align: center;
+      font-size: .75rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+
+  <!-- Brand -->
+  <div class="brand">
+    <div class="brand-icon">💬</div>
+    <h1>WhatsApp Dashboard</h1>
+    <p>Sign in to access your message analytics</p>
+  </div>
+
+  <!-- Error alert -->
+  <div class="alert alert-error" id="alert-error">
+    <span>⚠️</span>
+    <span id="alert-error-text">Invalid username or password.</span>
+  </div>
+
+  <!-- Login form -->
+  <form id="login-form" autocomplete="on">
+    <div class="form-group">
+      <label for="username">Username</label>
+      <div class="input-wrap">
+        <span class="input-icon">👤</span>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          placeholder="Enter your username"
+          autocomplete="username"
+          required
+        />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <div class="input-wrap">
+        <span class="input-icon">🔒</span>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Enter your password"
+          autocomplete="current-password"
+          required
+        />
+        <button type="button" class="toggle-pass" id="toggle-pass" title="Show/hide password">👁</button>
+      </div>
+    </div>
+
+    <label class="remember">
+      <input type="checkbox" id="remember"/> Remember me for 8 hours
+    </label>
+
+    <button type="submit" class="btn-login" id="btn-login">
+      <span class="btn-text">Sign In →</span>
+      <span class="spinner" id="spinner"></span>
+    </button>
+  </form>
+
+  <div class="divider">default credentials</div>
+
+  <div class="hint">
+    <div>Change these in your <strong>.env</strong> file</div>
+    <div class="hint-row">
+      <span>Username: <strong>admin</strong></span>
+      <span>Password: <strong>admin@123</strong></span>
+    </div>
+  </div>
+
+  <div class="card-footer">
+    WhatsApp Business Analytics · Secure Login
+  </div>
+</div>
+
+<script>
+  // ── Toggle password visibility
+  const passInput  = document.getElementById('password');
+  const toggleBtn  = document.getElementById('toggle-pass');
+  toggleBtn.addEventListener('click', () => {
+    const isHidden = passInput.type === 'password';
+    passInput.type = isHidden ? 'text' : 'password';
+    toggleBtn.textContent = isHidden ? '🙈' : '👁';
+  });
+
+  // ── Auto-focus username
+  document.getElementById('username').focus();
+
+  // ── Form submit
+  const form      = document.getElementById('login-form');
+  const btnLogin  = document.getElementById('btn-login');
+  const btnText   = btnLogin.querySelector('.btn-text');
+  const spinner   = document.getElementById('spinner');
+  const alertBox  = document.getElementById('alert-error');
+  const alertText = document.getElementById('alert-error-text');
+
+  function showError(msg) {
+    alertText.textContent = msg;
+    alertBox.classList.add('show');
+    // Shake the card
+    const card = document.querySelector('.card');
+    card.style.animation = 'none';
+    setTimeout(() => { card.style.animation = ''; }, 10);
+  }
+  function hideError() { alertBox.classList.remove('show'); }
+
+  function setLoading(on) {
+    btnLogin.disabled = on;
+    btnText.style.display  = on ? 'none' : 'inline';
+    spinner.style.display  = on ? 'block' : 'none';
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideError();
+    setLoading(true);
+
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+
+    // Read returnTo from URL query string
+    const params   = new URLSearchParams(window.location.search);
+    const returnTo = params.get('returnTo') || '/dashboard';
+
+    try {
+      const res = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, returnTo }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        btnText.textContent = '✅ Success! Redirecting...';
+        btnText.style.display = 'inline';
+        spinner.style.display = 'none';
+        setTimeout(() => { window.location.href = data.redirectTo || '/dashboard'; }, 500);
+      } else {
+        setLoading(false);
+        showError(data.error || 'Invalid username or password.');
+        document.getElementById('password').value = '';
+        document.getElementById('password').focus();
+      }
+    } catch (err) {
+      setLoading(false);
+      showError('Network error. Please try again.');
+    }
+  });
+
+  // ── Enter key submits
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') form.requestSubmit();
+  });
+</script>
+</body>
+</html>

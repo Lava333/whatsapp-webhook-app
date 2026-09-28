@@ -1,0 +1,29 @@
+{
+  "name": "whatsapp-webhook-app",
+  "version": "1.0.0",
+  "description": "WhatsApp Cloud API Webhook Integration with Analytics Dashboard",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "ngrok": "node scripts/ngrok-start.js",
+    "seed": "node scripts/seed.js",
+    "test:webhook": "node scripts/test-webhook.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-session": "^1.18.0",
+    "sql.js": "^1.12.0"
+  },
+  "devDependencies": {
+    "localtunnel": "^2.0.2",
+    "ngrok": "^5.0.0-beta.2",
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

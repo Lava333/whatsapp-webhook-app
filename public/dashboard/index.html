@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WhatsApp Business Dashboard</title>
+  <link rel="stylesheet" href="style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ─── Sidebar ─────────────────────────────────────────────── -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <span class="brand-logo">💬</span>
+    <div>
+      <div class="brand-name">WhatsApp</div>
+      <div class="brand-sub">Business Dashboard</div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="#" class="nav-item active" data-tab="overview">
+      <span class="nav-icon">📊</span> Overview
+    </a>
+    <a href="#" class="nav-item" data-tab="clients">
+      <span class="nav-icon">👥</span> Clients
+      <span class="nav-badge" id="nav-client-count">0</span>
+    </a>
+    <a href="#" class="nav-item" data-tab="messages">
+      <span class="nav-icon">📨</span> Messages
+    </a>
+    <a href="#" class="nav-item" data-tab="analytics">
+      <span class="nav-icon">📈</span> Analytics
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="live-dot"></div>
+    <span id="sidebar-last-updated">Connecting...</span>
+  </div>
+  <div class="sidebar-logout">
+    <a href="/logout" class="logout-link" onclick="return confirmLogout()">
+      <span class="logout-icon">⏻</span>
+      <span class="logout-label">Sign Out</span>
+    </a>
+  </div>
+</aside>
+
+<!-- ─── Main ────────────────────────────────────────────────── -->
+<div class="main-wrap">
+
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <h2 id="tab-title">Overview</h2>
+      <span class="topbar-sub" id="tab-subtitle">Real-time WhatsApp message metrics</span>
+    </div>
+    <div class="topbar-right">
+      <button class="btn-refresh" onclick="refreshAll()">↻ Refresh</button>
+    </div>
+  </header>
+
+  <!-- ════════ TAB: OVERVIEW ════════ -->
+  <section class="tab-content active" id="tab-overview">
+
+    <!-- Hero metric: clients -->
+    <div class="hero-banner">
+      <div class="hero-stat">
+        <div class="hero-value" id="hero-clients">—</div>
+        <div class="hero-label">Messages received from clients</div>
+      </div>
+      <div class="hero-divider"></div>
+      <div class="hero-stat">
+        <div class="hero-value" id="hero-today-clients">—</div>
+        <div class="hero-label">Active clients today</div>
+      </div>
+      <div class="hero-divider"></div>
+      <div class="hero-stat">
+        <div class="hero-value" id="hero-new-clients">—</div>
+        <div class="hero-label">New clients today</div>
+      </div>
+    </div>
+
+    <!-- Metric cards -->
+    <div class="cards-grid">
+      <div class="card">
+        <div class="card-top">
+          <span class="card-icon">📨</span>
+          <span class="card-trend" id="trend-total"></span>
+        </div>
+        <div class="card-value" id="card-total">—</div>
+        <div class="card-label">Total Messages</div>
+      </div>
+      <div class="card">
+        <div class="card-top">
+          <span class="card-icon">👥</span>
+        </div>
+        <div class="card-value" id="card-clients">—</div>
+        <div class="card-label">Unique Clients</div>
+      </div>
+      <div class="card">
+        <div class="card-top">
+          <span class="card-icon">📅</span>
+        </div>
+        <div class="card-value" id="card-today">—</div>
+        <div class="card-label">Today's Messages</div>
+      </div>
+      <div class="card">
+        <div class="card-top">
+          <span class="card-icon">📥</span>
+        </div>
+        <div class="card-value" id="card-inbound">—</div>
+        <div class="card-label">Inbound</div>
+      </div>
+      <div class="card">
+        <div class="card-top">
+          <span class="card-icon">📤</span>
+        </div>
+        <div class="card-value" id="card-outbound">—</div>
+        <div class="card-label">Outbound</div>
+      </div>
+    </div>
+
+    <!-- Overview charts row -->
+    <div class="row-2col">
+      <div class="panel">
+        <div class="panel-header">
+          <h3>Messages Per Day <span class="chip">Last 30 days</span></h3>
+        </div>
+        <canvas id="chart-daily" height="130"></canvas>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <h3>Message Types</h3>
+        </div>
+        <canvas id="chart-type" height="130"></canvas>
+      </div>
+    </div>
+
+    <!-- Top clients preview -->
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Top Clients by Message Volume</h3>
+        <button class="btn-link" onclick="switchTab('clients')">View all →</button>
+      </div>
+      <table class="data-table" id="top-clients-table">
+        <thead>
+          <tr>
+            <th>#</th><th>Client</th><th>Phone</th>
+            <th>Messages</th><th>Last Message</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="top-clients-tbody">
+          <tr><td colspan="6" class="empty">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ════════ TAB: CLIENTS ════════ -->
+  <section class="tab-content" id="tab-clients">
+    <div class="panel">
+      <div class="panel-header">
+        <h3>All Clients <span class="chip" id="clients-count-chip">0</span></h3>
+        <div class="controls">
+          <input id="client-search" type="text" placeholder="Search by name or phone…" oninput="loadClients()"/>
+          <select id="client-sort" onchange="loadClients()">
+            <option value="last_message">Sort: Last Active</option>
+            <option value="message_count">Sort: Most Messages</option>
+            <option value="first_message">Sort: First Seen</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Client cards grid -->
+      <div class="client-grid" id="client-grid">
+        <div class="empty">Loading clients...</div>
+      </div>
+
+      <div class="pagination" id="client-pagination">
+        <button id="client-prev" onclick="clientPageChange(-1)" disabled>← Prev</button>
+        <span id="client-page-info">Page 1</span>
+        <button id="client-next" onclick="clientPageChange(1)">Next →</button>
+      </div>
+    </div>
+
+    <!-- Client message drawer (shown when a client is clicked) -->
+    <div class="drawer" id="client-drawer" style="display:none">
+      <div class="drawer-header">
+        <div>
+          <h3 id="drawer-name">Client</h3>
+          <span class="text-muted" id="drawer-phone"></span>
+        </div>
+        <button class="btn-close" onclick="closeDrawer()">✕</button>
+      </div>
+      <div class="drawer-stats" id="drawer-stats"></div>
+      <div class="drawer-messages" id="drawer-messages"></div>
+    </div>
+  </section>
+
+  <!-- ════════ TAB: MESSAGES ════════ -->
+  <section class="tab-content" id="tab-messages">
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Message Log <span class="chip" id="msg-count-chip">0 total</span></h3>
+        <input id="msg-search" type="text" placeholder="Filter messages…" oninput="applyMsgFilter()"/>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Client</th><th>Type</th>
+              <th>Message</th><th>Direction</th><th>Time</th>
+            </tr>
+          </thead>
+          <tbody id="messages-tbody">
+            <tr><td colspan="6" class="empty">Loading messages…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <button id="msg-prev" onclick="msgPageChange(-1)" disabled>← Prev</button>
+        <span id="msg-page-info">Page 1</span>
+        <button id="msg-next" onclick="msgPageChange(1)">Next →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ TAB: ANALYTICS ════════ -->
+  <section class="tab-content" id="tab-analytics">
+    <div class="row-2col">
+      <div class="panel">
+        <div class="panel-header">
+          <h3>Daily Messages + Unique Clients <span class="chip">30 days</span></h3>
+        </div>
+        <canvas id="chart-daily-clients" height="160"></canvas>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <h3>Weekly Trend <span class="chip">12 weeks</span></h3>
+        </div>
+        <canvas id="chart-weekly" height="160"></canvas>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /main-wrap -->
+
+<script src="app.js"></script>
+</body>
+</html>
