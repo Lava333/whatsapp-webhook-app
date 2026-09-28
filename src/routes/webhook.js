@@ -8,6 +8,7 @@
 const express = require('express');
 const router = express.Router();
 const { saveMessage } = require('../db/messages');
+const { sendTextMessage } = require('../utils/whatsapp');
 
 // ─────────────────────────────────────────────
 // GET /whatsapp/webhook
@@ -122,6 +123,33 @@ router.post('/', (req, res) => {
             });
           } catch (dbErr) {
             console.error('[Webhook] DB save error:', dbErr.message);
+          }
+
+          // Auto-reply to the incoming message
+          const autoReplyEnabled = process.env.AUTO_REPLY !== 'false';
+          if (autoReplyEnabled && senderPhone) {
+            (async () => {
+              try {
+                let replyText;
+                const lower = (body || '').toLowerCase().trim();
+
+                if (messageType !== 'text') {
+                  replyText = `Hello${senderName ? ' ' + senderName : ''}! 👋 We received your ${messageType}. Thank you!`;
+                } else if (['hi', 'hello', 'hey'].includes(lower)) {
+                  replyText = `Hello${senderName ? ' ' + senderName : ''}! 👋 How can we help you today?`;
+                } else if (['menu', 'help'].includes(lower)) {
+                  replyText = `📋 *Options Menu*:\n1. Check status\n2. Talk to support\n3. Info\n\nReply with what you need!`;
+                } else {
+                  replyText = `Hello${senderName ? ' ' + senderName : ''}! 👋 We received your message: "${body}". We will get back to you shortly!`;
+                }
+
+                await sendTextMessage(senderPhone, replyText);
+                console.log(`[Webhook] 🤖 Auto-reply sent to ${senderPhone}`);
+              } catch (replyErr) {
+                const errMsg = replyErr?.response?.data?.error?.message || replyErr.message;
+                console.error(`[Webhook] ❌ Auto-reply failed to ${senderPhone}:`, errMsg);
+              }
+            })();
           }
         });
 

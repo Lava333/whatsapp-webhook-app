@@ -42,23 +42,34 @@ router.post('/', async (req, res) => {
     });
   } catch (err) {
     const status   = err?.response?.status;
-    const apiMsg   = err?.response?.data?.error?.message;
-    const apiCode  = err?.response?.data?.error?.code;
+    const apiError = err?.response?.data?.error;
+    const apiMsg   = apiError?.message;
+    const apiCode  = apiError?.code;
+
+    console.error(`[Send] ❌ WhatsApp API Error for ${phone}:`, {
+      status,
+      code: apiCode,
+      message: apiMsg || err.message,
+      details: apiError
+    });
 
     let readable = apiMsg || err.message || 'Unknown error';
 
-    // Give actionable hints for common errors
-    if (!apiMsg && err.message === 'Got unexpected null') {
-      readable = 'Access token is invalid or expired. Update WHATSAPP_ACCESS_TOKEN in your .env file.';
+    // Prioritize specific Meta API error codes first
+    if (apiCode === 131030) {
+      readable = 'Recipient number not allowed in Sandbox mode. Add this number in Meta Developer Portal → WhatsApp → API Setup → "To" recipient list.';
+    } else if (apiCode === 131047) {
+      readable = '24-hour window closed. The recipient must message your WhatsApp business number first, or you must send an approved template message.';
+    } else if (apiCode === 131026) {
+      readable = 'Message undeliverable: The recipient number is not registered on WhatsApp or is unable to receive messages.';
     } else if (status === 401 || apiCode === 190) {
-      readable = 'Access token expired or invalid. Get a new one from Meta → WhatsApp → API Setup.';
-    } else if (status === 400 && readable.includes('phone')) {
-      readable = 'Invalid phone number format. Use country code + number, e.g. 919876543210';
-    } else if (apiCode === 131030) {
-      readable = 'This phone number is not in your recipient list. Add it in Meta → Step 1 → Recipient.';
+      readable = 'Access token expired or invalid. Generate a new token in Meta Developer Portal → WhatsApp → API Setup.';
+    } else if (apiCode === 100 || (status === 400 && /invalid.*parameter|phone.*format/i.test(apiMsg || ''))) {
+      readable = 'Invalid phone number format. Use country code + number without + or spaces, e.g. 919876543210';
+    } else if (!apiMsg && err.message === 'Got unexpected null') {
+      readable = 'Access token is invalid or expired. Update WHATSAPP_ACCESS_TOKEN in your .env file.';
     }
 
-    console.error(`[Send] ❌ Failed to send to ${phone}:`, readable);
     return res.status(502).json({ success: false, error: readable });
   }
 });

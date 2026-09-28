@@ -1,5 +1,7 @@
 node_modules/
 .env
+data/sessions/
+data/*.db
 *.db
 *.db-shm
 *.db-wal
